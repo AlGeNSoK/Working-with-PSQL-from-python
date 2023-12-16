@@ -131,78 +131,24 @@ def delete_client(conn, client_id):
                         """, (id_phone,))
             conn.commit()
 
-def find_client(conn, first_name = None, last_name = None, email = None, number_phone = None):
+def find_client(conn, **kwargs):
+    sql_query = ('SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone '
+                 'FROM Client c LEFT JOIN ClientPhone cp ON c.id = cp.client_id '
+                 'LEFT JOIN Phone p ON cp.phone_id = p.id')
+    if kwargs:
+        query_params = []
+        for k, v in kwargs.items():
+            query_params.append("%s = '%s'" % (k, v))
+        query_params_str = ' WHERE ' + ' AND '.join(query_params)
+        sql_query = sql_query + query_params_str
+
     with conn.cursor() as cur:
-        if first_name is None and last_name is None and email is None and number_phone is None:
-            print('Для поиска клиента не задано ни одного параметра. Выведен полный список клиентов.')
-            cur.execute("""
-                       SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                         JOIN ClientPhone cp ON c.id = cp.client_id
-                         JOIN Phone p ON cp.phone_id = p.id
-                       """)
-            print(cur.fetchall())
-        elif first_name is not None and last_name is not None and email is not None and number_phone is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.first_name ILIKE %s 
-                           AND c.last_name ILIKE %s 
-                           AND c.email ILIKE %s 
-                           AND p.number_phone ILIKE %s;
-                        """, (first_name, last_name, email, number_phone))
-            print(cur.fetchall())
-        elif first_name is not None and last_name is not None and email is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.first_name ILIKE %s 
-                           AND c.last_name ILIKE %s 
-                           AND c.email ILIKE %s 
-                        """, (first_name, last_name, email))
-            print(cur.fetchall())
-        elif first_name is not None and last_name is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.first_name ILIKE %s 
-                           AND c.last_name ILIKE %s 
-                        """, (first_name, last_name))
-            print(cur.fetchall())
-        elif first_name is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.first_name ILIKE %s;
-                        """, (first_name, ))
-            print(cur.fetchall())
-        elif last_name is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.last_name ILIKE %s;
-                        """, (last_name, ))
-            print(cur.fetchall())
-        elif email is not None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE c.email ILIKE %s;
-                        """, (email, ))
-            print(cur.fetchall())
-        elif number_phone is None:
-            cur.execute("""
-                        SELECT c.id, c.first_name, c.last_name, c.email, p.number_phone FROM Client c
-                          JOIN ClientPhone cp ON c.id = cp.client_id
-                          JOIN Phone p ON cp.phone_id = p.id
-                         WHERE p.number_phone ILIKE %s;
-                        """, (number_phone, ))
-            print(cur.fetchall())
+        cur.execute(sql_query)
+        result = cur.fetchall()
+        if result:
+            print(result)
+        else:
+            print('С заданными параметрами не найдено ни одного клиента.')
 
 
 if __name__ == '__main__':
@@ -221,6 +167,6 @@ if __name__ == '__main__':
         # update_info_client(conn, '2', first_name='Semen', last_name='Sidorov', email='999@gmail.com', number_phone='+7(777)777-77-77')
         # delete_telefon_client(conn, '1')
         # delete_client(conn, '3')
-        find_client(conn)
-        find_client(conn, email='999@gmail.com')
+        # find_client(conn)
+        find_client(conn, first_name='Ivan')
     conn.close()
